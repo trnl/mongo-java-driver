@@ -56,7 +56,7 @@ import static org.mongodb.connection.ClusterType.ReplicaSet;
 @ThreadSafe
 public class Mongo {
     static final String ADMIN_DATABASE_NAME = "admin";
-    private static final String VERSION = "3.0.0-SNAPSHOT";
+    private static final String VERSION = "3.0.0";
 
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
 

@@ -1,0 +1,61 @@
+apply from: 'gradle/maven-deployment.gradle'
+apply from: 'gradle/osgi-compatibility.gradle'
+apply plugin: 'release'
+apply plugin: 'console'
+apply plugin: 'github'
+
+version = project('driver').version
+
+def bumpVersion(String v) {
+    v.replaceAll(
+            /(\d+)\.(\d+)\.(\d+).*/,
+            { m -> "${m[1]}.${m[2]}.${(m[3] as int) + 1}-SNAPSHOT" }
+    )
+}
+
+github {
+    repo 'git@github.com:trnl/mongo-java-driver.git'
+
+    pages {
+        from(project(':bson').javadoc.outputs.files) {
+            into 'bson/javadoc'
+        }
+        from(project(':driver').javadoc.outputs.files) {
+            into 'driver/javadoc'
+        }
+        from(project(':driver-compat').javadoc.outputs.files) {
+            into 'driver-compat/javadoc'
+        }
+        into { "$project.release.version" }
+    }
+
+    release {
+        tag { "r$project.release.version" }
+        name { "$project.release.version" }
+    }
+}
+
+release {
+//    onlyIf { project.git.status().isEmpty() }
+
+    version { console.prompt(' > Please enter release version:', project.version - '-SNAPSHOT') }
+    tag { "r$project.release.version" }
+    commitMessage { "Release $project.release.version" }
+
+    update {
+        file project('driver-compat').file('src/main/com/mongodb/Mongo.java')
+        file project.file('build.gradle')
+        projects allprojects
+    }
+
+    next {
+        version { console.prompt(' > Please enter next version:', bumpVersion(project.release.version)) }
+        commitMessage { "Bumping version to $project.release.next.version" }
+    }
+
+    duringRelease subprojects.findAll { it.name != 'util' }*.install
+    duringRelease project('driver').uberJar
+    duringRelease project('driver-compat').uberJar
+    duringRelease publishGhPages
+    duringRelease draftGhRelease
+}

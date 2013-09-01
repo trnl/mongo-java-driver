@@ -1,0 +1,4 @@
+org.bson
+org.bson.diagnostics
+org.bson.io
+org.bson.types
